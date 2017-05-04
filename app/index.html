@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Malayalam Character Mapper</title>
+  </head>
+  
+  <style>
+	
+		.rowDiv{
+			clear:both;
+		}
+		.columnDiv{
+			width:10px;
+			height:10px;
+			border:1px solid #000;
+			float:left;
+			margin:2px;
+		}
+		.colorCls{
+			background-color: blue;
+		}
+	</style>
+  
+  <body style="width:100%;height:100%">
+		<canvas id='textCanvas1' width="64" height="32" style="border:0px solid #000"></canvas>
+  
+		<div id='labelDiv'>
+		</div>
+		
+		<br><br>
+		<textarea id='pointsArray' rows='10' cols='50'></textarea>
+  </body>
+
+  <script>
+    // You can also require other files to run in this process
+    require('./renderer.js')
+	
+	var malayalamVowels 	= ['അ', 'ആ', 'ഇ', 'ഈ', 'ഉ', 'ഊ', 'ഋ', 'എ', 'ഏ', 'ഐ', 'ഒ', 'ഓ', 'ഔ', 'അം', 'അഃ'];
+	var malayalamConsonants	= ['ക', 'ഖ', 'ഗ', 'ഘ',' ങ', 'ച', 'ഛ', 'ജ', 'ഝ', 'ഞ', 'ട', 'ഠ', 'ഡ', 'ഢ', 'ണ', 'ത', 'ഥ', 'ദ', 'ധ', 'ന', 'പ', 'ഫ', 'ബ', 'ഭ', 'മ', 'യ', 'ര', 'ല', 'വ', 'ശ', 'ഷ', 'സ', 'ഹ', 'ള', 'ഴ', 'റ'];
+	var startWidth 	= 64;
+	var startHeight = 32;
+	var scale 		= 1;
+	var startFont 	= 30;
+	var xAdjus 		= 1;
+	var yAdjus 		= 24;
+	var colorArr	= 2048;
+	
+	var canvas = document.getElementById("textCanvas1");
+	canvas.width = startWidth * scale;
+	canvas.height = startHeight * scale;
+	var ctx = canvas.getContext("2d");
+	ctx.font = startFont*scale+"px Arial";
+	ctx.fillStyle = 'blue';
+	ctx.fillText(malayalamConsonants[2], xAdjus * scale, yAdjus * scale);
+	
+	var compDiv = document.getElementById('labelDiv');
+		for(var i = 0; i < 32; i+=2){
+			var rowEl = document.createElement("div");
+			rowEl.className += " rowDiv";
+			for(var j = 0; j < 64; j+=2){
+				var imgData = ctx.getImageData(j, i, 1, 1).data; 
+				//console.log("("+i+", "+j+") "+imgData[2]);
+				var el =  document.createElement("button");
+				el.setAttribute('name',"button_"+j/2+"_"+i/2);
+				el.onclick = function(){
+					var pos = this.getAttribute('name');
+					
+					document.getElementById("pointsArray").value += this.getAttribute('name') + ", ";
+				};
+				
+				if(imgData[2]!=0)el.className += " colorCls";
+				el.className += " columnDiv";
+				rowEl.appendChild(el);
+				
+			}
+			var el =  document.createElement("br")
+			compDiv.appendChild(rowEl);
+		}
+	
+	
+	
+  </script>
+</html>

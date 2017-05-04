@@ -1,0 +1,17 @@
+.letterMapRowDiv{
+    clear:both;
+}
+.letterMapColumnDiv{
+    width:20px;
+    height:20px;
+    border:1px solid #000;
+    float:left;
+    margin:2px;
+}
+.letterMapColorCls{
+    background-color: blue;
+}
+
+.letterMapClickedColorCls{
+    background-color: red;
+}

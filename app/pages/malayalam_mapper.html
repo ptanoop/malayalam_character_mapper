@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>		
+		<link rel="stylesheet" href="..\styles\material.css">
+		<link rel="stylesheet" href="..\styles\mdl_icons.css">	
+        <link rel="stylesheet" href="..\styles\malayalam_mapper.css">	
+		
+		<script src="..\jslibs\material.js"></script>				
+		<script src="..\jslibs\jquery-1.10.2.min.js"></script>	
+        <script src="..\jslibs\malayalam_characters.js"></script>		
+	</head>
+
+    <body>
+        <div class='mdl-layout_header' style='background-color:#ad1457'>
+            <div class="mdl-layout__header-row">
+                <span class="mdl-layout-title" style='color:white;font-size:24px;font-weight:bold'>മലയാള അക്ഷരങ്ങൾ</span>						
+            </div>	
+        </div>
+        <div class="mdl-grid">		
+            <div class="mdl-cell mdl-cell--12-col">
+                <div class="mdl-grid">
+                    <div class="mdl-cell" style="min-width:520px;border:0px solid #000">                        
+                        <div id='vowelsDiv'></div>    
+                        <br>                
+                        <div id='consonantsDiv'></div>                        
+                    </div>       
+                    <div class="mdl-cell" style="min-width:520px;border:0px solid #000;float:left"> 
+                        <canvas id='textCanvas' width="640" height="320" style="border:1px solid #ff0000"></canvas>
+                        <br>
+                        <div id='letterMap'></div>
+                        <div style='width:100%;height:20px;margin:10px'></div>
+                        <button 
+                            onclick="writeLetterPoints()"
+                            class='mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent'>
+                            Save
+                        </button>
+                        
+                    </div>             
+                </div>
+            </div>           
+        </div>    
+    </body>
+    <script>
+
+        var textCanvas = document.getElementById('textCanvas');
+        var textCanvasPoint = textCanvas.getBoundingClientRect();
+        var textCanvasContext = textCanvas.getContext("2d");
+
+        
+
+        var selectedLetter = {
+            letter : '',
+            characterMap : []   
+        }
+
+        var writeLetterPoints = function(){
+            MALAYALAM.setCharacterMap(selectedLetter);
+        }
+
+        var autoWriteLetterPoints = function(){
+            var fs = require('fs');
+            var map = fs.readFileSync('./app/letter_map/map.js'); 
+            var mapJson = JSON.parse(map);
+            console.log(mapJson);            
+            for(var i = 0; i < mapJson.characterMap.length; i++){
+                var pos = mapJson.characterMap[i];
+                writeCanvasContext.fillStyle = "blue";
+                writeCanvasContext.fillRect(pos.x, pos.y, 1, 1 );
+            }
+        }
+
+
+        /**
+         * Point based approach - getMouseDownOnTextCanvas
+         *
+                var position = {};
+            position.x = event.clientX - textCanvasPoint.left;
+            position.y = event.clientY - textCanvasPoint.top;        
+            if(currentPosition!=null && currentPosition.x==position.x && currentPosition.y==position.y){
+                currentPosition = null;
+            }
+            else{
+                if(direction == 'xAxis'){
+                    position.y = currentPosition.y;
+                }
+                else if(direction == 'yAxis'){
+                    position.x = currentPosition.x;
+                }
+
+                if(currentPosition!=null){                    
+                    var xdiff = position.x - currentPosition.x;
+                    var ydiff = position.y - currentPosition.y;
+                    var xsign = 1;
+                    var ysign = 1;
+                    xdiff>0?xsign=1:xsign=-1;
+                    ydiff>0?ysign=1:ysign=-1;
+                    textCanvasContext.rect(currentPosition.x - xsign*10, currentPosition.y - ysign*10, xdiff + xsign*20,  ydiff + ysign*20);
+                    textCanvasContext.stroke();
+                }
+
+                currentPosition = position;
+                textCanvasContext.rect(currentPosition.x, currentPosition.y, 2, 2);
+                textCanvasContext.fillStyle = '#ff0000';
+                textCanvasContext.fillRect(currentPosition.x, currentPosition.y, 2, 2);
+            }
+        */
+
+        ///var currentPosition = null;
+        //var direction = '';
+        
+        /*var getMouseMoveOnTextCanvas = function(){
+            if(currentPosition!=null){
+                var position = {};
+                position.x = event.clientX - textCanvasPoint.left;
+                position.y = event.clientY - textCanvasPoint.top;
+                var xdiff = Math.abs(currentPosition.x - position.x);
+                var ydiff = Math.abs(currentPosition.y - position.y);
+                if(xdiff > ydiff){
+                    direction = 'xAxis';
+                    textCanvasContext.moveTo(currentPosition.x, currentPosition.y);
+                    textCanvasContext.lineTo(position.x, currentPosition.y);
+                    textCanvasContext.strokeStyle = '#ff0000';
+                    textCanvasContext.stroke();
+                }
+                else{
+                    direction = 'yAxis';
+                    textCanvasContext.moveTo(currentPosition.x, currentPosition.y);
+                    textCanvasContext.lineTo(currentPosition.x, position.y);
+                    textCanvasContext.strokeStyle = '#ff0000';
+                    textCanvasContext.stroke();
+                }
+                //console.log(position.x,position.y);
+            }
+            
+        }
+        */
+        var getMouseDownOnTextCanvas = function(){        
+            var position = {};
+            position.x = event.clientX - textCanvasPoint.left;
+            position.y = event.clientY - textCanvasPoint.top;
+            var x = Math.floor(position.x / 10) * 10;
+            var y = Math.floor(position.y / 10) * 10;            
+            var isLetterPresent = false;
+            var pixelBlock = {};
+            pixelBlock.block = [];
+            for(var j = y; j < y + 10; j++){
+                for(var i = x; i < x + 10; i++){                
+                    var imgData = textCanvasContext.getImageData(i, j, 1, 1).data;                     
+                    if(imgData[0]==0 && imgData[1]==0 && imgData[2]==255){
+                        isLetterPresent = true;
+                        var pos = { x : i, y : j };
+                        pixelBlock.block.push(pos); 
+                    }
+                }
+            }            
+            if(isLetterPresent){
+                selectedLetter.characterMap.push(pixelBlock);
+                console.log(x,y);
+                textCanvasContext.rect(x, y, 10, 10);
+                textCanvasContext.fillStyle = '#ff0000';
+                textCanvasContext.fillRect(x, y, 10, 10);
+            } 
+        }
+        
+        var drawLetter = function(letter){
+            
+            var startWidth 	= 64;
+            var startHeight = 32;
+            var scale 		= 8;
+            var startFont 	= 30;
+            var xAdjus 		= -1;
+            var yAdjus 		= 24;
+            
+            textCanvas.width    = startWidth * scale;
+            textCanvas.height   = startHeight * scale;
+           
+            textCanvasContext.rect(0, 0, textCanvas.width, textCanvas.height);
+            textCanvasContext.fillStyle = "white";
+            textCanvasContext.fill();
+
+            for(var i = 0; i < textCanvas.width; i+=10){
+                textCanvasContext.moveTo(i, 0);
+                textCanvasContext.lineTo(i, textCanvas.height);
+                textCanvasContext.strokeStyle = '#ff0000';
+                textCanvasContext.stroke();
+            }
+            for(var i = 0; i < textCanvas.height; i+=10){
+                textCanvasContext.moveTo(0, i);
+                textCanvasContext.lineTo(textCanvas.width, i);
+                textCanvasContext.stroke();
+            }
+            
+            if(selectedLetter.letter){
+                textCanvasContext.font      = startFont*scale+"px Arial";
+                textCanvasContext.fillStyle = 'blue';            
+                //textCanvasContext.strokeStyle = 'black';
+                //textCanvasContext.strokeText(selectedLetter.letter, xAdjus * scale, yAdjus * scale);
+                textCanvasContext.fillText(selectedLetter.letter, xAdjus * scale, yAdjus * scale);                                
+                textCanvas.addEventListener("mousedown", getMouseDownOnTextCanvas, false);
+                //textCanvas.addEventListener("mousemove", getMouseMoveOnTextCanvas, false);
+            }                        
+        }
+
+        var plotLetterPoint = function(pos){
+            console.log(pos);  
+            textCanvasContext.fillStyle = 'blue';
+            textCanvasContext.fillRect(pos.x,pos.y,1,1);                   
+        }
+
+        var writeLetter = function(letter){
+
+            var startWidth 	= 64;
+            var startHeight = 32;
+            var scale 		= 8;
+            var startFont 	= 30;
+            var xAdjus 		= -1;
+            var yAdjus 		= 24;
+            
+            textCanvas.width    = startWidth * scale;
+            textCanvas.height   = startHeight * scale;
+            
+            var blocks = selectedLetter.characterMap;
+            var index = 0;
+            var plotSlowly = setInterval(function(){    
+                var eachBlock = blocks[index].block;
+                for(var i = 0; i < eachBlock.length; i++){
+                    plotLetterPoint(eachBlock[i]); 
+                }                                           
+                index++;
+                if(index==blocks.length){
+                    clearInterval(plotSlowly);
+                }
+            },10);
+
+        }
+
+        setTimeout(function(){
+            var char_button_arr = document.getElementsByClassName('mal_button');
+            Array.prototype.filter.call(char_button_arr, function(char_button){
+                char_button.onclick = function(e){
+                    //var canvasElem = document.getElementById('textCanvas');
+                    console.log(this.value);
+                    selectedLetter.letter = this.value;
+                    selectedLetter.characterMap = MALAYALAM.getCharacterMap(this.value);                
+                    if(selectedLetter.characterMap.length==0)
+                        drawLetter();     
+                    else
+                        writeLetter();                   
+                }                
+            });
+        },200);
+
+
+        /** To Display on Screen as Button Panel */
+        var buttonStyle = "margin:5px;font-size:20px;font-weight:bold;width:75px;height:40px";    
+        var vowelsDiv = (function(){
+            var vowels_Div = "<div>";
+            var vowels = MALAYALAM.CHARACTERS.VOWELS;
+            for(var i = 0; i < vowels.length; i++){                
+                vowels_Div += "<button class='mdl-button mdl-js-button mdl-button--raised"
+                            + " mdl-js-ripple-effect mdl-button--accent mal_button'"
+                            +" value='"+vowels[i]+"' style='"+buttonStyle+"'>"
+                            + vowels[i]+"</button>";
+                if((i+1)%5==0)vowels_Div +='<br>';                             
+            }
+            vowels_Div += "</div>";        
+            return vowels_Div;
+        })();
+        var consonantsDiv = (function(){
+            var consonants_Div = "<div>";
+            var consonants = MALAYALAM.CHARACTERS.CONSONANTS;
+            for(var i = 0; i < consonants.length; i++){                
+                if(consonants[i]=='യ')consonants_Div +='<br>';
+                consonants_Div += "<button class='mdl-button mdl-js-button mdl-button--raised"
+                        + " mdl-js-ripple-effect mdl-button--accent mal_button'"
+                        +"value='"+consonants[i]+"' style='"+buttonStyle+"'>"
+                        + consonants[i]+"</button>";
+                if((i+1)%5==0)consonants_Div +='<br>';
+            }
+            consonants_Div += "</div>";        
+            return consonants_Div;
+        })();
+        /** To Display on Screen as Button Panel */
+                
+        document.getElementById('vowelsDiv').innerHTML = vowelsDiv;
+        document.getElementById('consonantsDiv').innerHTML = consonantsDiv;
+        drawLetter();
+
+    </script>
+</html>
